@@ -13,7 +13,7 @@ const supabaseClient = createClient(
 );
 module.exports.match_accounts = async function (
   embedding,
-  match_threshold = 0.85
+  match_threshold = 0.88
 ) {
   const { data } = await supabaseClient.rpc("match_accounts", {
     query_embedding: embedding.data[0].embedding,
@@ -43,5 +43,26 @@ module.exports.getAccountByContent = async function (content) {
     .from("accounts")
     .select("content")
     .eq("content", content)
+    .single();
+};
+
+module.exports.getAccounts = async function (case_id) {
+  return await supabaseClient
+    .from("accounts")
+    .select("id, case_id, content, from, received_at")
+    .eq("case_id", case_id);
+};
+
+module.exports.getReports = async function () {
+  return await supabaseClient
+    .from("reports")
+    .select("id, case_id, report, created_at");
+};
+
+module.exports.getReport = async function (id) {
+  return await supabaseClient
+    .from("reports")
+    .select("id, case_id, report, created_at")
+    .eq("id", id)
     .single();
 };

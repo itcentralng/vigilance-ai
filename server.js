@@ -9,8 +9,9 @@ const {
   getAccountByContent,
   dbInsertReport,
 } = require("./db");
-const { createEmbedding, generateReport } = require("./openaiApi");
+const { createEmbedding, generateReport } = require("./openai.api");
 const { v4: uuidv4 } = require("uuid");
+const reportsApi = require("./reports.api");
 
 configDotenv();
 const app = express();
@@ -18,13 +19,9 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.use("/api", reportsApi);
 app.post("/incoming-messages", async (req, res) => {
-  console.log(req.body);
-  let text = req.body.text.replace(/\n/g, " ");
-  let intersection = new Array();
-
-  // Get location and time info
-  const [location, time] = text.split("+");
+  let text = req.body.text.replace(/\n/g, " ") + " " + req.body.date;
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
@@ -32,26 +29,7 @@ app.post("/incoming-messages", async (req, res) => {
   // Check if account is a duplicate
   const ifExists = Boolean((await getAccountByContent(text)).data);
   if (!ifExists) {
-    // Get embeddings for location and time (open ai)
-    const locationAndTimeEmbedding = await createEmbedding(
-      (location + time).trim()
-    );
-    // Get embeddings for location separately (open ai)
-    const locationEmbedding = await createEmbedding(location.trim());
-
-    // Find records related to location and time (database)
-    const relatedLocationsAndTime = await match_accounts(
-      locationAndTimeEmbedding
-    );
-    // Find records related to just the location (database)
-    const relatedLocations = await match_accounts(locationEmbedding, 0.8);
-
-    // if both groups of records contain accounts
-    // Create and intersection of the records
-    if (relatedLocations && relatedLocationsAndTime)
-      intersection = relatedLocationsAndTime.filter((item) =>
-        relatedLocations.find((item2) => item.id === item2.id)
-      );
+    const relatedCases = await match_accounts(textEmbedding);
 
     const values = {
       content: text,
@@ -60,7 +38,7 @@ app.post("/incoming-messages", async (req, res) => {
       from: req.body.from,
       // Generate a new uuid if there are no similar reports in the database
       // else set case_id to the related case_id
-      case_id: intersection[0] ? intersection[0].case_id : uuidv4(),
+      case_id: relatedCases.length ? relatedCases[0].case_id : uuidv4(),
     };
     // Insert into database if it is not a duplicate
     const { data: insertedAccount, error: insertError } = await dbInsertAccount(
