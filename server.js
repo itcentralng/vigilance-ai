@@ -23,7 +23,12 @@ app.post("/incoming-messages", async (req, res) => {
   let intersection = new Array();
 
   // Get location and time info
+<<<<<<< HEAD
   const [location, locationAndTime] = text.split("+");
+=======
+  locationAndTime = text.split("+")[0];
+  location = locationAndTime.split(",")[0];
+>>>>>>> ae299f949f0ffdd1e7419a3a3907caf0c5a68cd4
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
