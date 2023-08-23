@@ -21,12 +21,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.post("/incoming-messages", async (req, res) => {
   let text = req.body.text.replace(/\n/g, " ");
   let intersection = new Array();
-  let locationAndTime, location;
 
   // Get location and time info
-  locationAndTime = text.split("+")[0];
-  location = locationAndTime.split(",")[0];
-  console.log(locationAndTime);
+  const [location, locationAndTime] = text.split("+");
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
@@ -35,9 +32,11 @@ app.post("/incoming-messages", async (req, res) => {
   const ifExists = Boolean((await getAccountByContent(text)).data);
   if (!ifExists) {
     // Get embeddings for location and time (open ai)
-    const locationAndTimeEmbedding = await createEmbedding(locationAndTime);
+    const locationAndTimeEmbedding = await createEmbedding(
+      locationAndTime.trim()
+    );
     // Get embeddings for location separately (open ai)
-    const locationEmbedding = await createEmbedding(location);
+    const locationEmbedding = await createEmbedding(location.trim());
 
     // Find records related to location and time (database)
     const relatedLocationsAndTime = await match_accounts(
@@ -80,7 +79,7 @@ app.post("/incoming-messages", async (req, res) => {
         updated_at: new Date().toISOString(),
       });
       if (error) console.log(error);
-      console.log(report);
+      res.status(200).send(report);
     }
   } else {
     console.log("Account of incident already Exists!");

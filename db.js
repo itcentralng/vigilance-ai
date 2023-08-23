@@ -24,7 +24,7 @@ module.exports.match_accounts = async function (
 };
 
 module.exports.dbInsertAccount = async function (values) {
-  return await supabaseClient.from("accounts").insert(values).select();
+  return await supabaseClient.from("accounts").insert(values).select().single();
 };
 
 module.exports.dbInsertReport = async function (values) {

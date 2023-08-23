@@ -12,8 +12,7 @@ async function createEmbedding(text) {
 }
 
 function generatePrompt(accounts) {
-  let prompt =
-    "You are a forensic expert, you can write a summary report based on these accounts.\n";
+  let prompt = "Generate a report from the following incident accounts";
   accounts.forEach(
     (account, index) => (prompt += `${index + 1}. ${account.content} \n`)
   );
@@ -23,6 +22,11 @@ async function generateReport(accounts) {
   const res = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
+      {
+        role: "system",
+        content:
+          "You are a forensic expert, you can write a full report based on related incidents accounts.",
+      },
       {
         role: "user",
         content: generatePrompt(accounts),
