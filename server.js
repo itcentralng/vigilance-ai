@@ -24,8 +24,9 @@ app.post("/incoming-messages", async (req, res) => {
   let locationAndTime, location;
 
   // Get location and time info
-  locationAndTime = text.substring(text.indexOf("[") + 1, text.indexOf("]"));
+  locationAndTime = text.split("+")[0];
   location = locationAndTime.split(",")[0];
+  console.log(locationAndTime);
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
@@ -40,11 +41,10 @@ app.post("/incoming-messages", async (req, res) => {
 
     // Find records related to location and time (database)
     const relatedLocationsAndTime = await match_accounts(
-      locationAndTimeEmbedding,
-      0.8
+      locationAndTimeEmbedding
     );
     // Find records related to just the location (database)
-    const relatedLocations = await match_accounts(locationEmbedding, 0.6);
+    const relatedLocations = await match_accounts(locationEmbedding, 0.8);
 
     // if both groups of records contain accounts
     // Create and intersection of the records
@@ -74,21 +74,22 @@ app.post("/incoming-messages", async (req, res) => {
     // Insert generated report into db
     if (!accountsError) {
       const report = await generateReport(accounts);
-      console.log(report);
-      await dbInsertReport({
+      const { error } = await dbInsertReport({
         report: report,
         case_id: insertedAccount.case_id,
         updated_at: new Date().toISOString(),
       });
+      if (error) console.log(error);
+      console.log(report);
     }
   } else {
-    console.log("Account already Exists!");
+    console.log("Account of incident already Exists!");
   }
 
   res.end();
 });
 
-const port = process.env.SERVER_PORT;
+const port = process.env.PORT;
 app.listen(port, function () {
   console.log(`Web server listening on port ${port}`);
 });
