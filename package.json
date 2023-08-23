@@ -1,8 +1,8 @@
 {
-  "name": "lib",
+  "name": "vigilance-ai",
   "version": "1.0.0",
   "description": "",
-  "main": "db.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
