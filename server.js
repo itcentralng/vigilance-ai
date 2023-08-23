@@ -19,16 +19,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.post("/incoming-messages", async (req, res) => {
+  console.log(req.body);
   let text = req.body.text.replace(/\n/g, " ");
   let intersection = new Array();
 
   // Get location and time info
-<<<<<<< HEAD
-  const [location, locationAndTime] = text.split("+");
-=======
-  locationAndTime = text.split("+")[0];
-  location = locationAndTime.split(",")[0];
->>>>>>> ae299f949f0ffdd1e7419a3a3907caf0c5a68cd4
+  const [location, time] = text.split("+");
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
@@ -38,7 +34,7 @@ app.post("/incoming-messages", async (req, res) => {
   if (!ifExists) {
     // Get embeddings for location and time (open ai)
     const locationAndTimeEmbedding = await createEmbedding(
-      locationAndTime.trim()
+      (location + time).trim()
     );
     // Get embeddings for location separately (open ai)
     const locationEmbedding = await createEmbedding(location.trim());
@@ -60,6 +56,8 @@ app.post("/incoming-messages", async (req, res) => {
     const values = {
       content: text,
       embedding: textEmbedding.data[0].embedding,
+      received_at: req.body.date,
+      from: req.body.from,
       // Generate a new uuid if there are no similar reports in the database
       // else set case_id to the related case_id
       case_id: intersection[0] ? intersection[0].case_id : uuidv4(),
