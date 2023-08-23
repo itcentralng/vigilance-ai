@@ -26,7 +26,6 @@ app.post("/incoming-messages", async (req, res) => {
   // Get location and time info
   locationAndTime = text.split("+")[0];
   location = locationAndTime.split(",")[0];
-  console.log(locationAndTime);
 
   // Get embeddings for the complete text
   const textEmbedding = await createEmbedding(text);
@@ -80,7 +79,7 @@ app.post("/incoming-messages", async (req, res) => {
         updated_at: new Date().toISOString(),
       });
       if (error) console.log(error);
-      console.log(report);
+      res.status(200).send(report);
     }
   } else {
     console.log("Account of incident already Exists!");
