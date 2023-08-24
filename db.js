@@ -24,11 +24,18 @@ module.exports.match_accounts = async function (
 };
 
 module.exports.dbInsertAccount = async function (values) {
-  return await supabaseClient.from("accounts").insert(values).select().single();
+  return await supabaseClient.from("accounts").insert(values);
 };
 
 module.exports.dbInsertReport = async function (values) {
-  return await supabaseClient.from("reports").insert(values).select();
+  return await supabaseClient.from("reports").insert(values);
+};
+
+module.exports.dbInsertCase = async function (case_id) {
+  return await supabaseClient.from("cases").insert({ case_id });
+};
+module.exports.dbInsertCase = async function (values) {
+  return await supabaseClient.from("cases").insert(values);
 };
 
 module.exports.getAccountsByCaseId = async function (case_id) {

@@ -8,6 +8,7 @@ const {
   getAccountsByCaseId,
   getAccountByContent,
   dbInsertReport,
+  dbInsertCase,
 } = require("./db");
 const { createEmbedding, generateReport } = require("./openai.api");
 const { v4: uuidv4 } = require("uuid");
@@ -29,36 +30,40 @@ app.post("/incoming-messages", async (req, res) => {
   const textEmbedding = await createEmbedding(text);
 
   // Check if account is a duplicate
+  // Insert into database if it is not a duplicate
   const ifExists = Boolean((await getAccountByContent(text)).data);
   if (!ifExists) {
     const relatedCases = await match_accounts(textEmbedding);
+
+    // Generate a new uuid if there are no similar reports in the database
+    // else set case_id to the related case_id
+    const case_id = relatedCases.length ? relatedCases[0].case_id : uuidv4();
+
+    const { error: insertCaseError } = await dbInsertCase({ case_id });
+    if (!insertCaseError) console.log("Inserted Case Successful");
+    else console.log(insertCaseError);
 
     const values = {
       content: text,
       embedding: textEmbedding.data[0].embedding,
       received_at: req.body.date,
       from: req.body.from,
-      // Generate a new uuid if there are no similar reports in the database
-      // else set case_id to the related case_id
-      case_id: relatedCases.length ? relatedCases[0].case_id : uuidv4(),
+      case_id,
     };
-    // Insert into database if it is not a duplicate
-    const { data: insertedAccount, error: insertError } = await dbInsertAccount(
-      values
-    );
-    if (!insertError) console.log("Insert Successful");
+    const { error: insertError } = await dbInsertAccount(values);
+    if (!insertError) console.log("Inserted Account Successful");
     else console.log(insertError);
 
     // Get all related reports
     const { data: accounts, accountsError } = await getAccountsByCaseId(
-      insertedAccount.case_id
+      case_id
     );
     // Insert generated report into db
     if (!accountsError) {
       const report = await generateReport(accounts);
       const { error } = await dbInsertReport({
         report: report,
-        case_id: insertedAccount.case_id,
+        case_id: case_id,
         updated_at: new Date().toISOString(),
       });
       if (error) console.log(error);
