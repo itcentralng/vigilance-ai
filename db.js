@@ -66,3 +66,15 @@ module.exports.getReport = async function (id) {
     .eq("id", id)
     .single();
 };
+
+module.exports.createUser = async function (values) {
+  return await supabaseClient.from("users").insert(values).select().single();
+};
+
+module.exports.getUser = async function (email) {
+  return await supabaseClient
+    .from("users")
+    .select()
+    .eq("email", email)
+    .single();
+};

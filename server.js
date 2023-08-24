@@ -12,6 +12,7 @@ const {
 const { createEmbedding, generateReport } = require("./openai.api");
 const { v4: uuidv4 } = require("uuid");
 const reportsApi = require("./reports.api");
+const usersApi = require("./users.api");
 
 configDotenv();
 const app = express();
@@ -19,7 +20,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use("/api", reportsApi);
+app.use("/api/reports", reportsApi);
+app.use("/api/users", usersApi);
 app.post("/incoming-messages", async (req, res) => {
   let text = req.body.text.replace(/\n/g, " ") + " " + req.body.date;
 
